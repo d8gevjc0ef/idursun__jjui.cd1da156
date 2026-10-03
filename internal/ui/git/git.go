@@ -626,7 +626,7 @@ func (m *Model) createMenuItems() []item {
 	hasRemote := len(m.remoteNames) > 0
 	var selectedRemote string
 	if hasRemote {
-		selectedRemote = m.remoteNames[(m.selectedRemoteIdx+1)%len(m.remoteNames)]
+		selectedRemote = m.remoteNames[m.selectedRemoteIdx]
 	} else {
 		// set selectedRemote to empty string and `git` command fails gracefully
 		selectedRemote = ""
@@ -640,7 +640,7 @@ func (m *Model) createMenuItems() []item {
 			if b.Conflict {
 				continue
 			}
-			pushable := b.Local != nil && (len(b.Remotes) != 0 || b.HasTrackedRemote(selectedRemote))
+			pushable := b.Local != nil && (len(b.Remotes) == 0 || b.HasTrackedRemote(selectedRemote))
 			if pushable && !seenBookmarks[b.Name] {
 				seenBookmarks[b.Name] = true
 				selectedBookmarks = append(selectedBookmarks, b.Name)
@@ -672,7 +672,7 @@ func (m *Model) createMenuItems() []item {
 		},
 	)
 
-	hasMultipleRevisions := len(revisions.Revisions) >= 1
+	hasMultipleRevisions := len(revisions.Revisions) > 1
 
 	if hasMultipleRevisions {
 		flags := []string{"--remote", selectedRemote}
@@ -697,7 +697,7 @@ func (m *Model) createMenuItems() []item {
 			item{
 				category: itemCategoryPush,
 				name:     fmt.Sprintf("git push %s --remote %s", strings.Join(bookmarkFlags, " "), selectedRemote),
-				desc:     fmt.Sprintf("Push all bookmarks in selected changes (%s)", strings.Join(selectedBookmarks, " ")),
+				desc:     fmt.Sprintf("Push all bookmarks in selected changes (%s)", strings.Join(selectedBookmarks, ", ")),
 				command:  jj.GitPush(flags...),
 				key:      "b",
 			})

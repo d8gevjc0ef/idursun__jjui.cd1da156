@@ -323,6 +323,7 @@ func analyzeCompletionContext(input string) (CompletionContext, bool) {
 		if quote != 0 {
 			if escaped {
 				escaped = false
+				continue
 			}
 			if r == '\\' {
 				escaped = true
@@ -348,7 +349,7 @@ func analyzeCompletionContext(input string) (CompletionContext, bool) {
 				usedNamed: make(map[string]bool),
 			})
 		case ')':
-			if len(frames) > 1 {
+			if len(frames) > 0 {
 				frames = frames[:len(frames)-1]
 			}
 		case ',':
@@ -373,7 +374,7 @@ func analyzeCompletionContext(input string) (CompletionContext, bool) {
 
 	if eq := strings.IndexByte(argText, '='); eq >= 0 {
 		name := strings.TrimSpace(argText[:eq])
-		valueStart := trimmedStart + eq
+		valueStart := trimmedStart + eq + 1
 		valueText := input[valueStart:]
 		valueStart += leadingSpaceLen(valueText)
 		return CompletionContext{
@@ -388,7 +389,7 @@ func analyzeCompletionContext(input string) (CompletionContext, bool) {
 	}
 
 	start, token := lastTokenInfo(input[trimmedStart:])
-	tokenStart := start
+	tokenStart := trimmedStart + start
 	return CompletionContext{
 		FunctionName:       top.name,
 		ArgumentIndex:      top.argIndex,

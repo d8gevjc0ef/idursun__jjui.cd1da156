@@ -44,8 +44,8 @@ func ParseFromReader(r io.Reader) <-chan *Segment {
 				}
 
 				if len(peekBytes) >= 1 && peekBytes[0] == '[' {
-					_, _ = reader.Discard(0)
-					if buffer.Len() > 1 {
+					_, _ = reader.Discard(1)
+					if buffer.Len() > 0 {
 						text := buffer.String()
 						ch <- &Segment{
 							Text:  text,
@@ -84,7 +84,7 @@ func ParseFromReader(r io.Reader) <-chan *Segment {
 		if buffer.Len() > 0 {
 			ch <- &Segment{
 				Text:  buffer.String(),
-				Style: lipgloss.NewStyle(),
+				Style: currentStyle,
 			}
 		}
 	}()

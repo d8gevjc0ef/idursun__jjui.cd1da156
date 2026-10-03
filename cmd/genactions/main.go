@@ -1272,7 +1272,7 @@ func generateLuaTypesSource(actionIDs []string, argSchemas map[string]map[string
 		// Add child fields
 		childNames := sortedScopeNames(scope.children)
 		for _, childName := range childNames {
-			childScope := childName
+			childScope := scope.fullName + "." + childName
 			b.WriteString(fmt.Sprintf("---@field %s jjui.%s\n", childName, childScope))
 		}
 
@@ -1292,7 +1292,7 @@ func generateLuaTypesSource(actionIDs []string, argSchemas map[string]map[string
 			b.WriteString("---@field content fun(): string|nil\n")
 		}
 		if scope.fullName == "ui.preview" {
-			b.WriteString("---@field y_offset fun(): integer\n")
+			b.WriteString("---@field y_offset fun(): integer|nil\n")
 		}
 		// Mirror the runtime "close" alias for "cancel"
 		if hasCancel && !hasClose {
@@ -1310,7 +1310,7 @@ func generateLuaTypesSource(actionIDs []string, argSchemas map[string]map[string
 	// Add top-level scope children (those without dots).
 	for _, name := range topLevel {
 		// Skip revisions, revset, context — already declared above with hand-written types
-		if name == "revisions" || name == "context" {
+		if name == "revisions" || name == "revset" || name == "context" {
 			continue
 		}
 		b.WriteString(fmt.Sprintf("---@field %s jjui.%s\n", name, name))
@@ -1344,7 +1344,7 @@ func generateLuaTypesSource(actionIDs []string, argSchemas map[string]map[string
 
 	// Expose diff and ui as globals if they exist as top-level scopes.
 	for _, name := range topLevel {
-		if name == "ui" {
+		if name == "diff" || name == "ui" {
 			b.WriteString(fmt.Sprintf("---@type jjui.%s\n", name))
 			b.WriteString(fmt.Sprintf("%s = {}\n\n", name))
 		}

